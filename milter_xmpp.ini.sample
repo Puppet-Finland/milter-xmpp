@@ -1,0 +1,5 @@
+[xmpp]
+jabberid=alertbot@chat.example.org
+password=secret
+room=alerts@conference.example.org
+server=chat.example.org
