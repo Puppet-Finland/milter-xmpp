@@ -1,0 +1,10 @@
+[Unit]
+Description=Mail filter that forwards emails as XMPP messages to an XMPP server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/vagrant
+ExecStart=/vagrant/milter_test.py
+StandardOutput=/var/log/milter-xmpp.log
