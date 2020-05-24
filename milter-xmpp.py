@@ -10,6 +10,9 @@ import xmpp
 
 class XmppForwardMilter(Milter.Base):
     """A mail filter that converts emails into XMPP messages"""
+    
+    # The XMPP agent that is responsible for sending the messages
+    xmpp_agent = None
 
     def __init__(self):
         """An instance of this class is created for every email""" 
@@ -40,12 +43,12 @@ class XmppForwardMilter(Milter.Base):
 
     def eom(self):
         """Send the message to the XMPP server"""
-        print(self.xmpp_message)
-        #self.xmpp_agent.send_message(self.xmpp_message)
+        #print(self.xmpp_message)
+        self.__class__.xmpp_agent.send_message(self.xmpp_message)
         return Milter.CONTINUE
 
 class XmppAgent():
-    """Send an XMPP message"""
+    """Send XMPP messages"""
 
     def __init__(self):
         config = configparser.ConfigParser()
@@ -77,7 +80,7 @@ class XmppAgent():
 
     def leave_chatroom(self):
         # Make ourselves unavailable (=leave chatroom)
-        client.sendPresence(type='unavailable')
+        self.client.sendPresence(type='unavailable')
 
     def send_message(self, message):
         """Send a XMPP message"""
@@ -88,7 +91,7 @@ class XmppAgent():
 
         # Send a message and sleep to ensure it does not get dropped by the
         # server
-        client.send(msg)
+        self.client.send(msg)
         time.sleep(3)
 
 def main():
@@ -96,14 +99,22 @@ def main():
 
   # Connect to the XMPP server once. We don't want to repeat this on every
   # email.
-  xmpp_agent = XmppAgent()
 
   # Launch the mail filter daemon. It will forward emails from pre-defined email
   # addresses as XMPP messages,
   milter_timeout = 10
   Milter.factory = XmppForwardMilter
+  xmpp_agent = XmppAgent()
+  xmpp_agent.connect()
+  xmpp_agent.become_present()
+  xmpp_agent.join_chatroom()
+
+  XmppForwardMilter.xmpp_agent = xmpp_agent
+
   Milter.runmilter("xmppforwardmilter",'inet:8894',milter_timeout)
 
-
 if __name__ == "__main__":
+
   main()
+
+
