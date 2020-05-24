@@ -8,7 +8,7 @@ class MilterXmpp:
 
     def __init__(self):
         config = configparser.ConfigParser()
-        config.read("milter_xmpp.ini")
+        config.read("milter-xmpp.ini")
         self.jabberid = config.get("xmpp", "jabberid")
         self.password = config.get("xmpp", "password")
         self.room = config.get("xmpp", "room")

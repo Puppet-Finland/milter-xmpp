@@ -19,13 +19,13 @@ Install pyxmpppy:
 
     $ pip3 install xmpppy
 
-Copy milter_xmpp.ini.sample to milter_xmpp.ini and fill in the values.
+Copy milter-xmpp.ini.sample to milter-xmpp.ini and fill in the values.
 
 # Testing
 
 To test if sending XMPP messages works just do
 
-    $ ./milter_xmpp.py
+    $ ./milter-xmpp.py
 
 # Useful resources
 
