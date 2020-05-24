@@ -1,10 +1,48 @@
 #!/usr/bin/env python3
-import xmpp
-import time
-import configparser
 
-class MilterXmpp:
-    """Convert emails into XMPP messages in a mail filter (milter)"""
+import configparser
+import Milter
+import io
+import os
+import sys
+import time
+import xmpp
+
+class XmppForwardMilter(Milter.Base):
+    """A mail filter that converts emails into XMPP messages"""
+
+    def __init__(self):
+        """An instance of this class is created for every email""" 
+        self.id = Milter.uniqueID()
+        self.fp = io.StringIO() 
+        self.data = {}
+        self.xmpp_message = ""
+
+    def header(self, field, value):
+        self.data[field] = value
+        return Milter.CONTINUE
+
+    def eoh(self):
+        """Add a subset of headers to the XMPP message"""
+        self.xmpp_message += "Date: %s\n" % (self.data['Date'])
+        self.xmpp_message += "From: %s\n" % (self.data['From'])
+        self.xmpp_message += "Subject: %s\n" % (self.data['Subject'])
+        return Milter.CONTINUE
+
+    def body(self, chunk):
+        """Add the body of the message to the XMPP message"""
+        self.xmpp_message += "\n"
+        self.xmpp_message += chunk.decode('utf-8')
+        return Milter.CONTINUE
+
+    def eom(self):
+        """Send the message to the XMPP server"""
+        xmpp_agent = XmppAgent()
+        xmpp_agent.send_message(self.xmpp_message)
+        return Milter.CONTINUE
+
+class XmppAgent:
+    """Send an XMPP message"""
 
     def __init__(self):
         config = configparser.ConfigParser()
@@ -45,8 +83,10 @@ class MilterXmpp:
         client.sendPresence(typ='unavailable')
 
 def main():
-    instance = MilterXmpp()
-    instance.send_message("Test message from milter_xmpp.py")
+  timeout = 10
+  Milter.factory = XmppForwardMilter
+  sys.stdout.flush()
+  Milter.runmilter("xmppforwardmilter",'inet:8894',timeout)
 
 if __name__ == "__main__":
-    main()
+  main()
