@@ -37,7 +37,6 @@ class XmppForwardMilter(Milter.Base):
 
     def eom(self):
         """Send the message to the XMPP server"""
-        xmpp_agent = XmppAgent()
         xmpp_agent.send_message(self.xmpp_message)
         return Milter.CONTINUE
 
@@ -83,10 +82,17 @@ class XmppAgent:
         client.sendPresence(typ='unavailable')
 
 def main():
-  timeout = 10
-  Milter.factory = XmppForwardMilter
   sys.stdout.flush()
-  Milter.runmilter("xmppforwardmilter",'inet:8894',timeout)
+
+  # Connect to the XMPP server once. We don't want to repeat this on every
+  # email.
+  xmpp_agent = XmppAgent()
+
+  # Launch the mail filter daemon. It will forward emails from pre-defined email
+  # addresses as XMPP messages,
+  milter_timeout = 10
+  Milter.factory = XmppForwardMilter
+  Milter.runmilter("xmppforwardmilter",'inet:8894',milter_timeout)
 
 if __name__ == "__main__":
   main()
