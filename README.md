@@ -33,14 +33,14 @@ Install xmpppy and pymilter:
     $ pip3 install xmpppy pymilter
 
 Copy [milter-xmpp.ini.sample](milter-xmpp.ini.sample) to milter-xmpp.ini and
-fill in the proper values. The \[xmpp\] section:
+fill in the proper values. The **\[xmpp\]** section:
 
 * **jabberid**: the jabber ID for the XMPP agent (bot)
 * **password**: the password for the agent
 * **room**: the chatroom
 * **server**: the server to connect to
 
-The \[milter\] section:
+The **\[milter\]** section:
 
 * **iface**: the IP or name of the interface the milter will listen on. It is recommended to use a localhost address here, e.g. 127.0.0.1.
 * **port**: the port to listen on for MTA connections. Defaults to 8894.
