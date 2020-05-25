@@ -16,6 +16,10 @@ class XmppAgent(threading.Thread):
     def __init__(self, jabberid, password, room, server):
         threading.Thread.__init__(self)
 
+        # Ensure that this thread dies when the main thread dies
+        self.daemon = True
+
+        # XMPP settings
         self.jabberid = jabberid
         self.password = password
         self.room = room
@@ -53,8 +57,11 @@ class XmppAgent(threading.Thread):
         self.client.sendPresence(type='unavailable')
 
     def run(self):
+        """Take messages from the queue and send it via XMPP"""
         while True:
-            print(self.queue.get())
+            message = self.queue.get()
+            print(message)
+            self.send_message(message)
             self.queue.task_done()
 
     def send_message(self, message):
@@ -63,9 +70,6 @@ class XmppAgent(threading.Thread):
         msg.setType('groupchat')
         msg.setTag('x', namespace='http://jabber.org/protocol/muc#user')
         msg.setTo(self.room)
-
-        # Send a message and sleep to ensure it does not get dropped by the
-        # server
         self.client.send(msg)
 
 class XmppForwardMilter(Milter.Base):
@@ -74,7 +78,6 @@ class XmppForwardMilter(Milter.Base):
     # The XMPP agent that is responsible for forwarding the messages
     xmpp_agent = None
     valid_from = None
-    port = 8894
 
     def __init__(self):
         """An instance of this class is created for every email""" 
@@ -104,38 +107,78 @@ class XmppForwardMilter(Milter.Base):
         return Milter.CONTINUE
 
     def eom(self):
-        """Send the message to the XMPP server"""
-        #print(self.xmpp_message)
-        self.__class__.xmpp_agent.queue.put(self.xmpp_message)
+        """Send the message to the XMPP server if it is from a valid sender"""
+        if self.data['From'] == self.__class__.valid_from:
+          self.__class__.xmpp_agent.queue.put(self.xmpp_message)
         return Milter.CONTINUE
 
 def main():
-  sys.stdout.flush()
-
-  # Read the config file
-  config = configparser.ConfigParser()
-  config.read("milter-xmpp.ini")
-
-  # Launch the XMPP agent thread. It will forward emails from pre-defined email
-  # addresses as XMPP messages.
-  jabberid = config.get("xmpp", "jabberid")
-  password = config.get("xmpp", "password")
-  room = config.get("xmpp", "room")
-  server = config.get("xmpp", "server")
-  xmpp_agent = XmppAgent(jabberid, password, room, server)
-  xmpp_agent.establish_session()
-  xmpp_agent.start()
-
-  # Launch the mail filter. It parses incoming emails and forwards (some of)
-  # them to the XMPP Agent which will forward them to an XMPP chatroom.
-  milter_timeout = 10
-  Milter.factory = XmppForwardMilter
-  XmppForwardMilter.xmpp_agent = xmpp_agent
-  XmppForwardMilter.port = config.get("milter", "port")
-  XmppForwardMilter.valid_from = config.get("milter", "valid_from")
-  Milter.runmilter("xmppforwardmilter",'inet:8894',milter_timeout)
-
+    sys.stdout.flush()
+  
+    # Read the config file
+    config = configparser.ConfigParser()
+    config.read("milter-xmpp.ini")
+  
+    # Parse XMPP options
+    try:
+        xmpp_jabberid = config.get("xmpp", "jabberid")
+    except:
+        print("ERROR: jabberid parameter missing from xmpp section in config file!")
+        sys.exit(1)
+    try:
+        xmpp_password = config.get("xmpp", "password")
+    except:
+        print("ERROR: password parameter missing from xmpp section in config file!")
+        sys.exit(1)
+    try:
+        xmpp_room = config.get("xmpp", "room")
+    except:
+        print("ERROR: room parameter missing from xmpp section in config file!")
+        sys.exit(1)
+    try:
+        xmpp_server = config.get("xmpp", "server")
+    except:
+        print("ERROR: server parameter missing from xmpp section in config file!")
+        sys.exit(1)
+  
+    # Parse milter options
+    try:
+        milter_valid_from = config.get("milter", "valid_from")
+    except configparser.NoOptionError:
+        print("ERROR: valid_from parameter missing from milter section in config file!")
+        sys.exit(1)
+  
+    try:
+        milter_proto = config.get("milter", "proto")
+    except configparser.NoOptionError:
+        milter_proto = "inet"
+  
+    try:
+        milter_iface = "@%s" % (config.get("milter", "iface"))
+    except configparser.NoOptionError:
+        milter_iface = ""
+  
+    try:
+        milter_port = config.get("milter", "port")
+    except configparser.NoOptionError:
+        milter_port = 8894
+  
+    milter_socket = "%s:%s%s" % (milter_proto, milter_port, milter_iface)
+  
+    # Launch the XMPP agent thread. It will forward emails from pre-defined email
+    # addresses as XMPP messages.
+    xmpp_agent = XmppAgent(xmpp_jabberid, xmpp_password, xmpp_room, xmpp_server)
+    xmpp_agent.establish_session()
+    xmpp_agent.start()
+  
+    # Launch the mail filter. Whenever an email is received a new instance
+    # XmppForwardMilter is launched. Common settings like the XMPP Agent object
+    # are stored as class variables so that each instance can access them.
+    milter_timeout = 10
+    Milter.factory = XmppForwardMilter
+    XmppForwardMilter.xmpp_agent = xmpp_agent
+    XmppForwardMilter.valid_from = milter_valid_from
+    Milter.runmilter("xmppforwardmilter", milter_socket, milter_timeout)
+  
 if __name__ == "__main__":
   main()
-
-
