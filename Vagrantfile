@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
   export DEBIAN_FRONTEND=noninteractive
   export DEBIAN_PRIORITY=critical
   apt-get update -o quiet=2
-  apt-get -y install postfix mailutils libmilter-dev python3-pip
+  apt-get -y install postfix mailutils libmilter-dev python3-dev python3-pip python3-setuptools python3-wheel build-essential
   pip3 install pymilter xmpppy
   SCRIPT
 
