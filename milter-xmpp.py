@@ -13,25 +13,24 @@ import xmpp
 class XmppAgent(threading.Thread):
     """Send XMPP messages"""
 
-    def __init__(self):
+    def __init__(self, jabberid, password, room, server):
         threading.Thread.__init__(self)
-        config = configparser.ConfigParser()
-        config.read("milter-xmpp.ini")
-        self.jabberid = config.get("xmpp", "jabberid")
-        self.password = config.get("xmpp", "password")
-        self.room = config.get("xmpp", "room")
-        self.server = config.get("xmpp", "server")
+
+        self.jabberid = jabberid
+        self.password = password
+        self.room = room
+        self.server = server
         self.jid = xmpp.protocol.JID(self.jabberid)
         self.user = self.jid.getNode()
         self.resource = self.jid.getResource()
         self.client = None
         self.queue = Queue()
 
-    def run(self):
+    def establish_session(self):
+        """Preparations required before sending messages"""
         self.connect()
         self.become_present()
         self.join_chatroom()
-        time.sleep(10)
 
     def connect(self):
         """Connect to the XMPP server"""
@@ -71,9 +70,11 @@ class XmppAgent(threading.Thread):
 
 class XmppForwardMilter(Milter.Base):
     """A mail filter that converts emails into XMPP messages"""
-    
-    # The XMPP agent that is responsible for sending the messages
+
+    # The XMPP agent that is responsible for forwarding the messages
     xmpp_agent = None
+    valid_from = None
+    port = 8894
 
     def __init__(self):
         """An instance of this class is created for every email""" 
@@ -111,18 +112,27 @@ class XmppForwardMilter(Milter.Base):
 def main():
   sys.stdout.flush()
 
-  # Connect to the XMPP server once. We don't want to repeat this on every
-  # email.
+  # Read the config file
+  config = configparser.ConfigParser()
+  config.read("milter-xmpp.ini")
 
-  # Launch the mail filter daemon. It will forward emails from pre-defined email
-  # addresses as XMPP messages,
-  milter_timeout = 10
-  Milter.factory = XmppForwardMilter
-  xmpp_agent = XmppAgent()
+  # Launch the XMPP agent thread. It will forward emails from pre-defined email
+  # addresses as XMPP messages.
+  jabberid = config.get("xmpp", "jabberid")
+  password = config.get("xmpp", "password")
+  room = config.get("xmpp", "room")
+  server = config.get("xmpp", "server")
+  xmpp_agent = XmppAgent(jabberid, password, room, server)
+  xmpp_agent.establish_session()
   xmpp_agent.start()
 
+  # Launch the mail filter. It parses incoming emails and forwards (some of)
+  # them to the XMPP Agent which will forward them to an XMPP chatroom.
+  milter_timeout = 10
+  Milter.factory = XmppForwardMilter
   XmppForwardMilter.xmpp_agent = xmpp_agent
-
+  XmppForwardMilter.port = config.get("milter", "port")
+  XmppForwardMilter.valid_from = config.get("milter", "valid_from")
   Milter.runmilter("xmppforwardmilter",'inet:8894',milter_timeout)
 
 if __name__ == "__main__":
