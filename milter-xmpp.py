@@ -16,7 +16,8 @@ class XmppAgent(threading.Thread):
     def __init__(self, jabberid, password, room, server):
         threading.Thread.__init__(self)
 
-        # Ensure that this thread dies when the main thread dies
+        # FIXME: this does not make this thread die when the main program 
+        # exits.
         self.daemon = True
 
         # XMPP settings
@@ -60,7 +61,6 @@ class XmppAgent(threading.Thread):
         """Take messages from the queue and send it via XMPP"""
         while True:
             message = self.queue.get()
-            print(message)
             self.send_message(message)
             self.queue.task_done()
 
@@ -168,6 +168,7 @@ def main():
     # Launch the XMPP agent thread. It will forward emails from pre-defined email
     # addresses as XMPP messages.
     xmpp_agent = XmppAgent(xmpp_jabberid, xmpp_password, xmpp_room, xmpp_server)
+    xmpp_agent.setDaemon(True)
     xmpp_agent.establish_session()
     xmpp_agent.start()
   

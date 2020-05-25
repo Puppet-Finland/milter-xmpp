@@ -41,6 +41,16 @@ In production you probably want to launch this application as a (systemd)
 service. The provided xmpp-milter.service is tested on Ubuntu 18.04 but it
 probably works on other platforms as well.
 
+# TODO
+
+While this program definitely works, there is probably much space for improvement:
+
+* Right now it is not possible to exit the program with CTRL-C. You really
+need to forcibly kill it with SIGKILL.
+* There is no support for (automatically) reconnecting to the XMPP server if the connection goes down for whatever reason.
+* The classes could be split into separate files to make the whole a bit easier to read.
+* There are probably corner-cases where this fails.
+
 # Useful resources
 
 The [Ansible Jabber module](https://docs.ansible.com/ansible/latest/modules/jabber_module.html)

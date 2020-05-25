@@ -5,6 +5,6 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/vagrant
-ExecStart=/vagrant/milter_test.py
+WorkingDirectory=/opt/milter-xmpp
+ExecStart=/opt/milter-xmpp/milter-xmpp.py
 StandardOutput=/var/log/milter-xmpp.log
