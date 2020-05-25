@@ -8,4 +8,4 @@ server=chat.example.org
 #proto=inet
 #iface=localhost
 #port=8894
-valid_from="root <root@milter-xmpp.local>"
+valid_from=root <root@milter-xmpp.local>
