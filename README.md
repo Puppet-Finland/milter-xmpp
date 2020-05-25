@@ -33,8 +33,21 @@ Install xmpppy and pymilter:
     $ pip3 install xmpppy pymilter
 
 Copy [milter-xmpp.ini.sample](milter-xmpp.ini.sample) to milter-xmpp.ini and
-fill in the proper values.  Optional values have been commented out. More
-details on the mail filter socket options (port, iface, proto) are available
+fill in the proper values. The \[xmpp\] section:
+
+* **jabberid**: the jabber ID for the XMPP agent (bot)
+* **password**: the password for the agent
+* **room**: the chatroom
+* **server**: the server to connect to
+
+The \[milter\] section:
+
+* **iface**: the IP or name of the interface the milter will listen on. It is recommended to use a localhost address here, e.g. 127.0.0.1.
+* **port**: the port to listen on for MTA connections. Defaults to 8894.
+* **proto**: the protocol to use (inet, inet6). Defaults to inet.
+* **valid_from**: only forward emails whose "From" field matches this exactly. Do not quote the value, even if you use something like "NMS <nms@nms.example.org>".
+
+More details on the mail filter socket options (port, iface, proto) are available
 [here](https://pythonhosted.org/pymilter/namespacemilter.html).
 
 In production you probably want to launch this application as a (systemd)
