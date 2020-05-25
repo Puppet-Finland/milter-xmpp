@@ -114,11 +114,11 @@ class XmppForwardMilter(Milter.Base):
 
 def main():
     sys.stdout.flush()
-  
+
     # Read the config file
     config = configparser.ConfigParser()
     config.read("milter-xmpp.ini")
-  
+
     # Parse XMPP options
     try:
         xmpp_jabberid = config.get("xmpp", "jabberid")
@@ -140,38 +140,38 @@ def main():
     except:
         print("ERROR: server parameter missing from xmpp section in config file!")
         sys.exit(1)
-  
+
     # Parse milter options
     try:
         milter_valid_from = config.get("milter", "valid_from")
     except configparser.NoOptionError:
         print("ERROR: valid_from parameter missing from milter section in config file!")
         sys.exit(1)
-  
+
     try:
         milter_proto = config.get("milter", "proto")
     except configparser.NoOptionError:
         milter_proto = "inet"
-  
+
     try:
         milter_iface = "@%s" % (config.get("milter", "iface"))
     except configparser.NoOptionError:
         milter_iface = ""
-  
+
     try:
         milter_port = config.get("milter", "port")
     except configparser.NoOptionError:
         milter_port = 8894
-  
+
     milter_socket = "%s:%s%s" % (milter_proto, milter_port, milter_iface)
-  
+
     # Launch the XMPP agent thread. It will forward emails from pre-defined email
     # addresses as XMPP messages.
     xmpp_agent = XmppAgent(xmpp_jabberid, xmpp_password, xmpp_room, xmpp_server)
     xmpp_agent.setDaemon(True)
     xmpp_agent.establish_session()
     xmpp_agent.start()
-  
+
     # Launch the mail filter. Whenever an email is received a new instance
     # XmppForwardMilter is launched. Common settings like the XMPP Agent object
     # are stored as class variables so that each instance can access them.
@@ -180,6 +180,6 @@ def main():
     XmppForwardMilter.xmpp_agent = xmpp_agent
     XmppForwardMilter.valid_from = milter_valid_from
     Milter.runmilter("xmppforwardmilter", milter_socket, milter_timeout)
-  
+
 if __name__ == "__main__":
   main()
