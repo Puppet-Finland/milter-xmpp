@@ -108,7 +108,9 @@ class XmppForwardMilter(Milter.Base):
 
     def eom(self):
         """Send the message to the XMPP server if it is from a valid sender"""
+        print("Received email from %s" % (self.data['From']))
         if self.data['From'] == self.__class__.valid_from:
+          print("Forwarded email from %s to XMPP server" % (self.data['From']))
           self.__class__.xmpp_agent.queue.put(self.xmpp_message)
         return Milter.CONTINUE
 
@@ -181,5 +183,6 @@ def main():
     XmppForwardMilter.valid_from = milter_valid_from
     Milter.runmilter("xmppforwardmilter", milter_socket, milter_timeout)
 
+
 if __name__ == "__main__":
-  main()
+    main()
