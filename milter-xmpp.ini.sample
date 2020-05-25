@@ -3,3 +3,9 @@ jabberid=alertbot@chat.example.org
 password=secret
 room=alerts@conference.example.org
 server=chat.example.org
+
+[milter]
+#proto=inet
+#iface=localhost
+#port=8894
+valid_from="root <root@milter-xmpp.local>"
