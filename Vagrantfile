@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
   export DEBIAN_PRIORITY=critical
   apt-get update -o quiet=2
   apt-get -y install postfix mailutils libmilter-dev python3-pip
-  pip3 install pymilter
+  pip3 install pymilter xmpppy
   SCRIPT
 
   config.vm.define "milter-xmpp" do |box|
