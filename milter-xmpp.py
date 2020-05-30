@@ -70,7 +70,12 @@ class XmppAgent(threading.Thread):
         msg.setType('groupchat')
         msg.setTag('x', namespace='http://jabber.org/protocol/muc#user')
         msg.setTo(self.room)
-        self.client.send(msg)
+        try:
+          self.client.send(msg)
+        except OSError:
+          print("Re-establishing connection to the XMPP server")
+          self.establish_session()
+          self.client.send(msg)
 
 class XmppForwardMilter(Milter.Base):
     """A mail filter that converts emails into XMPP messages"""
