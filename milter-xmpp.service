@@ -7,4 +7,4 @@ Type=simple
 User=root
 WorkingDirectory=/etc/milter-xmpp
 ExecStart=/usr/bin/milter-xmpp.py
-StandardOutput=/var/log/milter-xmpp.log
+StandardOutput=file:/var/log/milter-xmpp.log
